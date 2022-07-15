@@ -1,0 +1,11 @@
+{
+    "name": "Microwave",
+    "description": "Used to bake and heat food items. Can set temperature up to 500K",
+    "image": "https://ipfs.io/ipfs/QmTVQpQrnxikWCs6VzDbJfp5uazZ43VaqWHdsuqA5GUjW1?filename=Microwave.png",
+    "attributes": [
+        {
+            "trait_type": "quality",
+            "value": 100
+        }
+    ]
+}

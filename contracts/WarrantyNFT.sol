@@ -15,10 +15,11 @@ contract WarrantyNFT is ERC721 {
         uint256 startDate;
         uint256 endDate;
     }
-    mapping(address => BuyerData) trackBuyers;
+    mapping(address => BuyerData) public trackBuyers;
+    mapping(uint256 => string) public trackTokenURI;
 
     constructor() public ERC721("Warranty", "WRTY") {
-        objectCounter = 1;
+        objectCounter = 0;
     }
 
     function recordSales(
@@ -26,7 +27,7 @@ contract WarrantyNFT is ERC721 {
         uint256 _warrantyPeriod,
         uint256 _startDate,
         uint256 _endDate
-    ) public returns (uint256) {
+    ) public {
         BuyerData memory buyer;
         buyer.objectId = objectCounter;
         buyer.objectName = _objectName;
@@ -34,7 +35,6 @@ contract WarrantyNFT is ERC721 {
         buyer.startDate = _startDate;
         buyer.endDate = _endDate;
         trackBuyers[msg.sender] = buyer;
-        return objectCounter;
     }
 
     function setNFTWarranty(string memory tokenURI) public {
@@ -42,6 +42,7 @@ contract WarrantyNFT is ERC721 {
         uint256 objectId = objectCounter;
         _safeMint(buyer, objectId);
         _setTokenURI(objectId, tokenURI);
+        trackTokenURI[objectId] = tokenURI;
         objectCounter = objectCounter + 1; // Increment object ID
     }
 

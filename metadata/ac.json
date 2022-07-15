@@ -1,0 +1,11 @@
+{
+    "name": "Air Conditioner",
+    "description": "Air conditioning device for household use. Regulates temperature!",
+    "image": "https://ipfs.io/ipfs/QmdBAhteiaw8zKVBnqyFkQwUTzkGHtgBm3uNgL6mxuzA6S?filename=AirConditoner.jpg",
+    "attributes": [
+        {
+            "trait_type": "quality",
+            "value": 100
+        }
+    ]
+}

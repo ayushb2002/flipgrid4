@@ -1,0 +1,11 @@
+{
+    "name": "Refridgerator",
+    "description": "Refridgerator for household purposes. Keeps food fresh and healthy!",
+    "image": "https://ipfs.io/ipfs/QmWQXER1ekUcERzVjim9oVxmTZKXXmx6W49wGMF1o3UjJu?filename=Refridgerator.png",
+    "attributes": [
+        {
+            "trait_type": "quality",
+            "value": 100
+        }
+    ]
+}
