@@ -1,5 +1,7 @@
 from brownie import WarrantyNFT, accounts, config
-from scripts.helpful_scripts import get_account, get_publish_source, OPENSEA_FORMAT
+from scripts.helpful_scripts import get_account, get_publish_source, OPENSEA_FORMAT, getDateInt
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 items_for_sale = [
     "Air Conditioner",
@@ -21,10 +23,13 @@ def main():
 def deploy_seller_to_buyer_transaction():
     i = 0  # Item index selected for sale!
     account = get_account()
+    expiry = 12
+    startDate = getDateInt()
+    endDate = getDateInt(expiry)
     warranty_nft = WarrantyNFT.deploy(
         {"from": account}, publish_source=get_publish_source())
     sales_id_tx = warranty_nft.recordSales(
-        items_for_sale[i], 12, 1, 2, {"from": account})
+        items_for_sale[i], expiry, startDate, endDate, {"from": account})
     sales_id_tx.wait(1)
 
     token_id = warranty_nft.objectCounter()
@@ -35,6 +40,7 @@ def deploy_seller_to_buyer_transaction():
 
     set_tokenURI(token_id, warranty_nft, warranty_nft.trackTokenURI(token_id))
     print(f"Bill number {token_id} confirmed! Warranty has been generated!")
+    return warranty_nft
 
 
 def set_tokenURI(token_id, nft_contract, tokenURI):

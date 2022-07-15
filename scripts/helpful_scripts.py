@@ -4,6 +4,8 @@ from brownie import (
     config
 )
 import os
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 OPENSEA_FORMAT = "https://testnets.opensea.io/assets/{}/{}"
 NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
@@ -34,3 +36,22 @@ def get_publish_source():
         return False
     else:
         return True
+
+
+def getDateInt(exp=None):
+    if exp:
+        formattedDate = date.today()+relativedelta(month=+exp)
+    else:
+        formattedDate = date.today()
+
+    strDate = str(formattedDate)
+    oldLiDate = strDate.split('-')
+    liDate = [int(i) for i in oldLiDate]
+    inc = 100**2
+    intDate = 0
+    for i in liDate:
+        intDate += i*inc
+        inc /= 100
+
+    Date = int(intDate)
+    return Date
