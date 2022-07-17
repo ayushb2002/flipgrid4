@@ -7,7 +7,7 @@ import os
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-OPENSEA_FORMAT = "https://testnets.opensea.io/assets/{}/{}"
+RARIBLE_FORMAT = "https://testnet.rarible.com/token/{}:{}"
 NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
     "hardhat", "development", "ganache"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
@@ -17,7 +17,9 @@ LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
 ]
 
 
-def get_account(index=None, id=None):
+def get_account(index=None, id=None, address="address_1", privateKey=None):
+    if privateKey:
+        return accounts.add(privateKey)
     if index:
         return accounts[index]
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
@@ -25,7 +27,8 @@ def get_account(index=None, id=None):
     if id:
         return accounts.load(id)
     if network.show_active() in config["networks"]:
-        return accounts.add(config["wallets"]["from_key"])
+        return accounts.add(config["wallets"]["from_key"][address])
+
     return None
 
 

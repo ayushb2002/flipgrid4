@@ -45,6 +45,10 @@ networks:
   matic-fork:
     eth_usd_price_feed: "0xF9680D99D6C9589e2a93a78A04A279e509205945"
 wallets:
-  from_key: ${PRIVATE_KEY}
+  from_key:
+    address_1: ${PRIVATE_KEY_1}
+    address_2: ${PRIVATE_KEY_2}
+  address_1: ${ADDRESS_1}
+  address_2: ${ADDRESS_2}
   from_mnemonic: ${MNEMONIC}
   # You'd have to change the accounts.add to accounts.from_mnemonic to use from_mnemonic
