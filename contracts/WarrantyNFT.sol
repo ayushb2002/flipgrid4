@@ -136,4 +136,15 @@ contract WarrantyNFT is ERC721 {
             b.price
         );
     }
+
+    function expired(uint256 _tokenId, address _customer)
+        public
+        payable
+        returns (bool)
+    {
+        if (returnOwner(_tokenId, _customer)) {
+            _burn(_tokenId);
+            return true;
+        } else return false;
+    }
 }

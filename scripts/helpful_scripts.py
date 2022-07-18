@@ -7,7 +7,8 @@ import os
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-RARIBLE_FORMAT = "https://testnet.rarible.com/token/{}:{}"
+#RARIBLE_FORMAT = "https://testnet.rarible.com/token/{}:{}"
+
 NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
     "hardhat", "development", "ganache"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
@@ -26,6 +27,8 @@ def get_account(index=None, id=None, address="address_1", privateKey=None):
         return accounts[0]
     if id:
         return accounts.load(id)
+    if network.show_active() == 'polygon-test':
+        return accounts.load('polygon_testnet')
     if network.show_active() in config["networks"]:
         return accounts.add(config["wallets"]["from_key"][address])
 
@@ -42,10 +45,12 @@ def get_publish_source():
 
 
 def getDateInt(exp=None):
-    if exp:
-        formattedDate = date.today()+relativedelta(month=+exp)
-    else:
+    if not exp or exp == 0:
         formattedDate = date.today()
+    else:
+        yr = int(exp/12)
+        mth = int(exp % 12)
+        formattedDate = date.today()+relativedelta(years=+yr, month=+mth)
 
     strDate = str(formattedDate)
     oldLiDate = strDate.split('-')
@@ -58,3 +63,12 @@ def getDateInt(exp=None):
 
     Date = int(intDate)
     return Date
+
+
+def returnDateFromInt(dt):
+    dt = str(dt)
+    year = dt[:4]
+    month = dt[4:6]
+    day = dt[6:8]
+
+    return day+":"+month+":"+year

@@ -1,5 +1,5 @@
-from brownie import WarrantyNFT, accounts, config
-from scripts.helpful_scripts import get_account, get_publish_source, RARIBLE_FORMAT, getDateInt
+from brownie import WarrantyNFT, accounts, config, network
+from scripts.helpful_scripts import get_account, get_publish_source, getDateInt, returnDateFromInt
 
 items_for_sale = [
     "Air Conditioner",
@@ -18,23 +18,24 @@ customerAddress2 = config["wallets"]["address_2"]
 
 
 def main():
-    warranty = deploy_seller_to_buyer_transaction(customerAddress)
+    warranty = deploy_seller_to_buyer_transaction(
+        customerAddress, expiry=0, price=20000)
     bill(warranty=warranty, objectId=0,
          customer=customerAddress, address="address_1")
-    buyerToBuyer(customerAddress, customerAddress2, 0,
-                 warranty, 10000, address="address_1")
-    bill(warranty=warranty, objectId=0,
-         customer=customerAddress2, address="address_2")
+    # buyerToBuyer(customerAddress, customerAddress2, 0,
+    #              warranty, 10000, address="address_1")
+    # bill(warranty=warranty, objectId=0,
+    #      customer=customerAddress2, address="address_2")
+    # res = expire(warranty=warranty, customer=customerAddress, tokenId=0)
+    # print(res)
 
 
-def deploy_seller_to_buyer_transaction(customerAddress, address="address_1"):
+def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, address="address_1"):
     privateKey = config["wallets"]["from_key"][address]
     i = 0  # Item index selected for sale!
     account = get_account(address=address)
-    expiry = 12
     startDate = getDateInt()
     endDate = getDateInt(expiry)
-    price = 20000
     warranty_nft = WarrantyNFT.deploy(
         {"from": account}, publish_source=get_publish_source())
     sales_id_tx = warranty_nft.recordSales(
@@ -55,6 +56,9 @@ def deploy_seller_to_buyer_transaction(customerAddress, address="address_1"):
 
 
 def set_tokenURI(token_id, nft_contract, tokenURI, privateKey):
+    # if network.show_active() == 'polygon-test':
+    #     dev = accounts.load('polygon_testnet')
+    # else:
     dev = accounts.add(privateKey)
     nft_contract.setTokenURI(token_id, tokenURI, {"from": dev})
     link = "https://testnet.rarible.com/token/" + \
@@ -87,7 +91,41 @@ def bill(warranty, objectId, customer, address="address_1"):
         objectId, customer, {"from": get_account(address=address)})
 
     print(f"Object Name - {objectName}")
-    print(f"Object Warranty Start Date (for the current owner) - {start}")
+    print(
+        f"Object Warranty Start Date (for the current owner) - {returnDateFromInt(start)}")
     print(f"Object Warranty Period (overall) - {period}")
-    print(f"Object Warranty End Period (overall) - {end}")
+    print(f"Object Warranty End Period (overall) - {returnDateFromInt(end)}")
     print(f"Object Price (for the current user) - {price}")
+
+
+def expire(warranty=None, customer=customerAddress, tokenId=None, expiry=None, address="address_1"):
+
+    if not warranty:
+        # Only for testing purpose!
+        if not expiry:
+            expiry = 12
+        warranty = deploy_seller_to_buyer_transaction(
+            customer, expiry, address=address)
+        tokenId = 0
+
+        if not tokenId:
+            print("Bill number is required to fetch details!")
+        return False
+
+    warranty_end = warranty.returnWarrantyEnd(
+        customer, tokenId, {"from": get_account(address=address)})
+
+    if warranty_end == 0:
+        print("Warranty expired or warranty does not exist (Bill Number might not exist)!")
+        return False
+    else:
+        if getDateInt() >= warranty_end:
+            warranty.expired(tokenId, customer, {
+                             "from": get_account(address=address)})
+            print(
+                f"Warranty end date was {returnDateFromInt(warranty_end)}. The warranty has expired. The NFT has been burnt!")
+            return True
+        else:
+            print(
+                f"Warranty expiry date is {returnDateFromInt(warranty_end)}. You can still claim the warranty!")
+            return True
