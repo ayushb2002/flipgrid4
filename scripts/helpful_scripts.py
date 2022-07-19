@@ -13,6 +13,7 @@ NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS = [
     "hardhat", "development", "ganache"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
     "mainnet-fork",
+    "polygon-fork",
     "binance-fork",
     "matic-fork",
 ]
@@ -27,8 +28,6 @@ def get_account(index=None, id=None, address="address_1", privateKey=None):
         return accounts[0]
     if id:
         return accounts.load(id)
-    if network.show_active() == 'polygon-test':
-        return accounts.load('polygon_testnet')
     if network.show_active() in config["networks"]:
         return accounts.add(config["wallets"]["from_key"][address])
 
@@ -37,7 +36,8 @@ def get_account(index=None, id=None, address="address_1", privateKey=None):
 
 def get_publish_source():
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS or not os.getenv(
-        "ETHERSCAN_TOKEN"
+        "ETHERSCAN_TOKEN",
+        "POLYGONSCAN_TOKEN"
     ):
         return False
     else:

@@ -18,10 +18,11 @@ customerAddress2 = config["wallets"]["address_2"]
 
 
 def main():
+    add_pk = "address_1"
     warranty = deploy_seller_to_buyer_transaction(
-        customerAddress, expiry=0, price=20000)
+        customerAddress, expiry=12, price=20000, address=add_pk)
     bill(warranty=warranty, objectId=0,
-         customer=customerAddress, address="address_1")
+         customer=customerAddress, address=add_pk)
     # buyerToBuyer(customerAddress, customerAddress2, 0,
     #              warranty, 10000, address="address_1")
     # bill(warranty=warranty, objectId=0,
@@ -37,7 +38,7 @@ def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, 
     startDate = getDateInt()
     endDate = getDateInt(expiry)
     warranty_nft = WarrantyNFT.deploy(
-        {"from": account}, publish_source=get_publish_source())
+        {"from": account})  # , publish_source=get_publish_source())
     sales_id_tx = warranty_nft.recordSales(
         items_for_sale[i], expiry, startDate, endDate, price, customerAddress, {"from": account})
     sales_id_tx.wait(1)
@@ -56,12 +57,9 @@ def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, 
 
 
 def set_tokenURI(token_id, nft_contract, tokenURI, privateKey):
-    # if network.show_active() == 'polygon-test':
-    #     dev = accounts.load('polygon_testnet')
-    # else:
     dev = accounts.add(privateKey)
     nft_contract.setTokenURI(token_id, tokenURI, {"from": dev})
-    link = "https://testnet.rarible.com/token/" + \
+    link = "https://testnet.rarible.com/token/polygon/" + \
         str(nft_contract.address)+":"+str(token_id)
     print(f"Awesome! You can view your NFT at {link}")
     print('Please give up to 20 minutes, and hit the "refresh metadata" button')
