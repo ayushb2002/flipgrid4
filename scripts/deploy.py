@@ -1,6 +1,8 @@
 from brownie import WarrantyNFT, accounts, config, network
-from scripts.helpful_scripts import get_account, get_publish_source, getDateInt, returnDateFromInt
-
+from scripts.helpful_scripts import get_account, get_publish_source, getDateInt, returnDateFromInt, upload_to_ipfs
+import json
+import requests
+import os
 items_for_sale = [
     "Air Conditioner",
     "Microwave",
@@ -18,11 +20,12 @@ customerAddress2 = config["wallets"]["address_2"]
 
 
 def main():
-    add_pk = "address_1"
-    warranty = deploy_seller_to_buyer_transaction(
-        customerAddress, expiry=12, price=20000, address=add_pk)
-    bill(warranty=warranty, objectId=0,
-         customer=customerAddress, address=add_pk)
+    test_pinata_and_ipfs()
+    retrieve_pinata()
+    # add_pk = "address_1"
+    # warranty = deploy_seller_to_buyer_transaction(
+    #     customerAddress, expiry=12, price=20000, address=add_pk)
+    # bill(warranty=warranty, objectId=0, address=add_pk)
     # buyerToBuyer(customerAddress, customerAddress2, 0,
     #              warranty, 10000, address="address_1")
     # bill(warranty=warranty, objectId=0,
@@ -31,9 +34,35 @@ def main():
     # print(res)
 
 
-def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, address="address_1"):
+def retrieve_pinata():
+    url = "https://api.pinata.cloud/pinning/pinJobs?status=retrieving&sort=ASC"
+
+    payload = {}
+    headers = {
+        'pinata_api_key': config["pinata"]["api_key"],
+        'pinata_secret_api_key': config["pinata"]["secret"]
+    }
+    response = requests.request("GET", url, headers=headers, data=payload)
+    print(response.text)
+    return True
+
+
+def test_pinata_and_ipfs():
+    imageFile = './metadata/img/laptop.png'
+    name = 'Laptop'
+    description = 'Lenovo Legion Y540 Gaming Laptop'
+    trait = {
+        "Battery Backup": "100"
+    }
+
+    uri = save_uploaded_ipfs_link(
+        imageFile=imageFile, name=name, description=description, trait=trait)
+    print(uri)
+
+
+def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000,  address="address_1"):
     privateKey = config["wallets"]["from_key"][address]
-    i = 0  # Item index selected for sale!
+    i = 2  # Item index selected for sale!
     account = get_account(address=address)
     startDate = getDateInt()
     endDate = getDateInt(expiry)
@@ -84,9 +113,9 @@ def isOwner(customer, objectId, warranty, address="address_1"):
     return warranty.returnOwner(objectId, customer, {"from": get_account(address=address)})
 
 
-def bill(warranty, objectId, customer, address="address_1"):
+def bill(warranty, objectId, address="address_1"):
     objectName, start, end, period, price = warranty.returnBill(
-        objectId, customer, {"from": get_account(address=address)})
+        objectId, {"from": get_account(address=address)})
 
     print(f"Object Name - {objectName}")
     print(
@@ -127,3 +156,57 @@ def expire(warranty=None, customer=customerAddress, tokenId=None, expiry=None, a
             print(
                 f"Warranty expiry date is {returnDateFromInt(warranty_end)}. You can still claim the warranty!")
             return True
+
+
+def save_uploaded_ipfs_link(imageFile=None, name=None, description=None, trait: dict = None, address="address_1"):
+    if not imageFile or not name or not description or not trait:
+        return False
+
+    try:
+        warranty = WarrantyNFT[-1]
+    except:
+        return False
+
+    image_uri = upload_to_ipfs(imageFile)
+    tx = warranty.incrementIPFS({"from": get_account(address=address)})
+    tx.wait(1)
+    objectId = warranty.ipfsCounter()
+    #json_path = f".\metadata\json\object-{objectId}.json"
+    jsonObject = {
+        "name": name,
+        "description": description,
+        "image_uri": image_uri,
+        "attributes": trait
+    }
+
+    jsonFile = json.dumps(jsonObject)
+
+    ipfs_url = "http://127.0.0.1:5001"
+    endpoint = "/api/v0/add"
+    response = requests.post(
+        ipfs_url + endpoint, files={"file": jsonFile})
+    ipfs_hash = response.json()["Hash"]
+    filename = f'object-{objectId}.json'
+    json_uri = f"https://ipfs.io/ipfs/{ipfs_hash}?filename={filename}"
+
+    print(ipfs_hash)
+    pinata_url = "https://api.pinata.cloud/pinning/pinByHash"
+    payload = json.dumps({
+        "hashToPin": ipfs_hash,
+        "options": {
+            "name": f"Object - {objectId}",
+            "pinataMetadata": jsonObject
+        }
+    })
+    headers = {
+        'Content-Type': 'application/json',
+        'pinata_api_key': config["pinata"]["api_key"],
+        'pinata_secret_api_key': config["pinata"]["secret"]
+    }
+
+    print(payload)
+    response = requests.request(
+        "POST", pinata_url, headers=headers, data=payload)
+
+    print(response.text)
+    return json_uri
