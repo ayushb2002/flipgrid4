@@ -20,16 +20,15 @@ customerAddress2 = config["wallets"]["address_2"]
 
 
 def main():
-    test_pinata_and_ipfs()
-    retrieve_pinata()
-    # add_pk = "address_1"
-    # warranty = deploy_seller_to_buyer_transaction(
-    #     customerAddress, expiry=12, price=20000, address=add_pk)
-    # bill(warranty=warranty, objectId=0, address=add_pk)
-    # buyerToBuyer(customerAddress, customerAddress2, 0,
-    #              warranty, 10000, address="address_1")
-    # bill(warranty=warranty, objectId=0,
-    #      customer=customerAddress2, address="address_2")
+    # test_pinata_and_ipfs()
+    # retrieve_pinata()
+    add_pk = "address_1"
+    tokenId = deploy_seller_to_buyer_transaction(
+        customerAddress, expiry=24, price=40000, name=items_for_sale[1], ipfs=items_for_sale_address[1], address=add_pk)
+    bill(objectId=tokenId, address=add_pk)
+    # buyerToBuyer(customerAddress, customerAddress2,
+    #              tokenId, 10000, address="address_1")
+    # bill(objectId=tokenId, address="address_2")
     # res = expire(warranty=warranty, customer=customerAddress, tokenId=0)
     # print(res)
 
@@ -60,29 +59,34 @@ def test_pinata_and_ipfs():
     print(uri)
 
 
-def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000,  address="address_1"):
+def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, name=None, ipfs=None, address="address_1"):
+    if not name or not ipfs:
+        return False
     privateKey = config["wallets"]["from_key"][address]
     i = 2  # Item index selected for sale!
     account = get_account(address=address)
     startDate = getDateInt()
     endDate = getDateInt(expiry)
-    warranty_nft = WarrantyNFT.deploy(
-        {"from": account})  # , publish_source=get_publish_source())
+    if WarrantyNFT == []:
+        warranty_nft = WarrantyNFT.deploy(
+            {"from": account})  # , publish_source=get_publish_source())
+    else:
+        warranty_nft = WarrantyNFT[-1]
     sales_id_tx = warranty_nft.recordSales(
-        items_for_sale[i], expiry, startDate, endDate, price, customerAddress, {"from": account})
+        name, expiry, startDate, endDate, price, customerAddress, {"from": account})
     sales_id_tx.wait(1)
 
     token_id = warranty_nft.objectCounter()
 
     assignWarranty_tx = warranty_nft.setNFTWarranty(
-        items_for_sale_address[i], customerAddress, {"from": account})
+        ipfs, customerAddress, {"from": account})
     assignWarranty_tx.wait(1)
 
     link = set_tokenURI(token_id, warranty_nft,
                         warranty_nft.trackTokenURI(token_id), privateKey)
 
     print(f"Bill number {token_id} confirmed! Warranty has been generated!")
-    return warranty_nft
+    return token_id
 
 
 def set_tokenURI(token_id, nft_contract, tokenURI, privateKey):
@@ -95,13 +99,17 @@ def set_tokenURI(token_id, nft_contract, tokenURI, privateKey):
     return link
 
 
-def buyerToBuyer(_from, _to, _tokenId, warranty_nft, price, address="address_1"):
+def buyerToBuyer(_from, _to, _tokenId, price=20000, address="address_1"):
+    if WarrantyNFT == []:
+        return False
+    else:
+        warranty_nft = WarrantyNFT[-1]
     account = get_account(address=address)
     date_of_purchase = getDateInt()
     tx = warranty_nft.buyerToBuyerSales(
         _from, _to, _tokenId, date_of_purchase, price, {"from": account})
     tx.wait(1)
-    if isOwner(_to, _tokenId, warranty_nft):
+    if isOwner(_to, _tokenId, address="address_2"):
         print("Successfully Transferred!")
         return True
     else:
@@ -109,11 +117,20 @@ def buyerToBuyer(_from, _to, _tokenId, warranty_nft, price, address="address_1")
         return False
 
 
-def isOwner(customer, objectId, warranty, address="address_1"):
+def isOwner(customer, objectId, address="address_1"):
+    if WarrantyNFT == []:
+        return False
+    else:
+        warranty = WarrantyNFT[-1]
     return warranty.returnOwner(objectId, customer, {"from": get_account(address=address)})
 
 
-def bill(warranty, objectId, address="address_1"):
+def bill(objectId, address="address_1"):
+    if WarrantyNFT == []:
+        return False
+    else:
+        warranty = WarrantyNFT[-1]
+
     objectName, start, end, period, price = warranty.returnBill(
         objectId, {"from": get_account(address=address)})
 
@@ -123,20 +140,18 @@ def bill(warranty, objectId, address="address_1"):
     print(f"Object Warranty Period (overall) - {period}")
     print(f"Object Warranty End Period (overall) - {returnDateFromInt(end)}")
     print(f"Object Price (for the current user) - {price}")
+    return (objectName, returnDateFromInt(start), period, returnDateFromInt(end), price)
 
 
-def expire(warranty=None, customer=customerAddress, tokenId=None, expiry=None, address="address_1"):
+def expire(customer=customerAddress, tokenId=None, address="address_1"):
 
-    if not warranty:
-        # Only for testing purpose!
-        if not expiry:
-            expiry = 12
-        warranty = deploy_seller_to_buyer_transaction(
-            customer, expiry, address=address)
-        tokenId = 0
+    if WarrantyNFT == []:
+        return False
+    else:
+        warranty = WarrantyNFT[-1]
 
-        if not tokenId:
-            print("Bill number is required to fetch details!")
+    if not tokenId:
+        print("Bill number is required to fetch details!")
         return False
 
     warranty_end = warranty.returnWarrantyEnd(
@@ -151,7 +166,7 @@ def expire(warranty=None, customer=customerAddress, tokenId=None, expiry=None, a
                              "from": get_account(address=address)})
             print(
                 f"Warranty end date was {returnDateFromInt(warranty_end)}. The warranty has expired. The NFT has been burnt!")
-            return True
+            return False
         else:
             print(
                 f"Warranty expiry date is {returnDateFromInt(warranty_end)}. You can still claim the warranty!")
