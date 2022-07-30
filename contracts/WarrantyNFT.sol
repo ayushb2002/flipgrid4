@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract WarrantyNFT is ERC721 {
     uint256 public objectCounter;
+    uint256 public ipfsCounter;
     struct BuyerData {
         uint256 objectId;
         string objectName;
@@ -20,6 +21,11 @@ contract WarrantyNFT is ERC721 {
 
     constructor() public ERC721("Warranty", "WRTY") {
         objectCounter = 0;
+        ipfsCounter = 0;
+    }
+
+    function incrementIPFS() public {
+        ipfsCounter = ipfsCounter + 1;
     }
 
     function recordSales(
@@ -114,7 +120,7 @@ contract WarrantyNFT is ERC721 {
         return owner == _customer;
     }
 
-    function returnBill(uint256 _tokenId, address _customer)
+    function returnBill(uint256 _tokenId)
         public
         view
         returns (

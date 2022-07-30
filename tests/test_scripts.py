@@ -22,7 +22,8 @@ def test_buyer_can_buy_from_seller():
 def test_warranty_expiry():
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
         pytest.skip("Only for testnet/mainnet!")
-    warranty = deploy_seller_to_buyer_transaction(customerAddress)
+    warranty = deploy_seller_to_buyer_transaction(
+        customerAddress, expiry=9, price=20000)
     expiry = warranty.returnWarrantyEnd(
         customerAddress, 0, {"from": get_account()})
     print(expiry)

@@ -1,0 +1,30 @@
+body, html { height: 90%; }
+.outerr {
+  width: 1.2px;
+  height: 35px;
+  margin: auto;
+  position: absolute;
+  left: 11%;
+  /* background-color: black; */
+  overflow: hidden;
+}
+.innerr {
+  position: absolute;
+  width:1.2px;
+  height: 42%;
+  top: 29%;
+  background: grey;
+  box-shadow: 0px 0px 9px 7px grey;
+}
+.spacer{
+    /* text-decoration: underline initial; */
+    margin-left: 20px;
+    width: 1px;
+}
+.flexer{
+    display: flex;
+}
+.black{
+  text-decoration: none;
+  color: black;
+}

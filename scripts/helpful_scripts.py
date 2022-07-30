@@ -6,6 +6,8 @@ from brownie import (
 import os
 from datetime import date
 from dateutil.relativedelta import relativedelta
+import requests
+from pathlib import Path
 
 #RARIBLE_FORMAT = "https://testnet.rarible.com/token/{}:{}"
 
@@ -19,19 +21,10 @@ LOCAL_BLOCKCHAIN_ENVIRONMENTS = NON_FORKED_LOCAL_BLOCKCHAIN_ENVIRONMENTS + [
 ]
 
 
-def get_account(index=None, id=None, address="address_1", privateKey=None):
-    if privateKey:
-        return accounts.add(privateKey)
-    if index:
-        return accounts[index]
-    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-        return accounts[0]
-    if id:
-        return accounts.load(id)
-    if network.show_active() in config["networks"]:
-        return accounts.add(config["wallets"]["from_key"][address])
+def get_account(address):
+    return accounts.add('0x11d53eaacb4f33eefe35f6ee4a36bd2bff73d096a6e5c6c232cf26b32213280c')
 
-    return None
+
 
 
 def get_publish_source():
@@ -48,7 +41,9 @@ def getDateInt(exp=None):
     if not exp or exp == 0:
         formattedDate = date.today()
     else:
+        exp += int(str(date.today())[5:7])
         yr = int(exp/12)
+        
         mth = int(exp % 12)
         formattedDate = date.today()+relativedelta(years=+yr, month=+mth)
 
@@ -72,3 +67,17 @@ def returnDateFromInt(dt):
     day = dt[6:8]
 
     return day+":"+month+":"+year
+
+
+def upload_to_ipfs(filepath):
+    with open(filepath, "rb") as fp:
+        image_binary = fp.read()
+        ipfs_url = "http://127.0.0.1:5001"
+        endpoint = "/api/v0/add"
+        response = requests.post(
+            ipfs_url + endpoint, files={"file": image_binary})
+        ipfs_hash = response.json()["Hash"]
+        filename = filepath.split("/")[-1:][0]
+        image_uri = f"https://ipfs.io/ipfs/{ipfs_hash}?filename={filename}"
+        print(image_uri)
+        return image_uri

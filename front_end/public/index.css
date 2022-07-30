@@ -1,0 +1,13 @@
+
+body {
+    background: linear-gradient(rgba(255,255,255,.5), rgba(255,255,255,.5)), url("https://img.freepik.com/free-vector/big-data-visualization-technology-background_1017-19390.jpg?t=st=1658604444~exp=1658605044~hmac=8c22cc5258c7328d07a7fc5e36c821bc9f23d5bd2157e94bfaaf42d04e5cfd4a");
+
+    background-attachment: fixed;
+    background-size: 100%;
+    height: 100vh; 
+    width: 100%;
+    margin: 0;
+
+  }
+ 
+  
