@@ -1,10 +1,16 @@
 from brownie import WarrantyNFT, accounts, config, network
+
 from flask import Flask,jsonify,request
 from flask_cors import CORS, cross_origin
+
+
 from scripts.helpful_scripts import get_account, get_publish_source, getDateInt, returnDateFromInt, upload_to_ipfs
 import json
 import requests
 import os
+
+
+
 
 items_for_sale = [
     "Air Conditioner",
@@ -24,7 +30,7 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 #deployeraddress='0x133aFe86B6cB9fEc747A45e1420F50db6149947a'
-#=========================================================
+#=
 @app.route("/")
 @cross_origin()
 def hello_world():
@@ -70,8 +76,9 @@ def newsale(cust, expiry, price, name,  privateKey, address):
     ipfs=request.form.get('ipfs')
     tokenId,link=deploy_seller_to_buyer_transaction(cust, expiry=expiry, price=price, name=name, ipfs=ipfs, privateKey=privateKey, address=address)
     return jsonify({"token":tokenId,'NFT':link})
-#=========================================================
+#=
 def main():
+
     
     app.run(debug=True)
 def notmain():
@@ -81,6 +88,13 @@ def notmain():
     #WarrantyNFT.deploy({"from" :get_account(address=add_pk)})
     tokenId,link = deploy_seller_to_buyer_transaction(
         customerAddress, expiry=24, price=40000, name=items_for_sale[1], ipfs=items_for_sale_address[1],privateKey=privateKey, address=add_pk)
+
+    # test_pinata_and_ipfs()
+    # retrieve_pinata()
+    add_pk = "address_1"
+    tokenId = deploy_seller_to_buyer_transaction(
+        customerAddress, expiry=24, price=40000, name=items_for_sale[1], ipfs=items_for_sale_address[1], address=add_pk)
+
     bill(objectId=tokenId, address=add_pk)
     # buyerToBuyer(customerAddress, customerAddress2,
     #              tokenId, 10000, address="address_1")
@@ -88,9 +102,14 @@ def notmain():
     # res = expire(warranty=warranty, customer=customerAddress, tokenId=0)
     # print(res)
 
-#=========================================================
+#=
+
+
+
+
 def retrieve_pinata():
     url = "https://api.pinata.cloud/pinning/pinJobs?status=retrieving&sort=ASC"
+
 
     payload = {}
     headers = {
@@ -115,6 +134,7 @@ def test_pinata_and_ipfs():
     print(uri)
 
 
+
 def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, name=None, ipfs=None, privateKey=None, address="address_1"):#address is of seller
     if not name or not ipfs or not privateKey:
         print('hehehehe')
@@ -122,6 +142,14 @@ def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, 
     
    
     account = get_account(address='0x11d53eaacb4f33eefe35f6ee4a36bd2bff73d096a6e5c6c232cf26b32213280c')
+
+def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, name=None, ipfs=None, address="address_1"):
+    if not name or not ipfs:
+        return False
+    privateKey = config["wallets"]["from_key"][address]
+    i = 2  # Item index selected for sale!
+    account = get_account(address=address)
+
     startDate = getDateInt()
     endDate = getDateInt(expiry)
     if WarrantyNFT == []:
@@ -129,10 +157,15 @@ def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, 
             {"from": account})  # , publish_source=get_publish_source())
     else:
         warranty_nft = WarrantyNFT[-1]
+
     print(1)
     sales_id_tx = warranty_nft.recordSales(
         name, expiry, startDate, endDate, price, customerAddress, {"from": account})
     print(2)
+
+    sales_id_tx = warranty_nft.recordSales(
+        name, expiry, startDate, endDate, price, customerAddress, {"from": account})
+
     sales_id_tx.wait(1)
 
     token_id = warranty_nft.objectCounter()
@@ -145,7 +178,11 @@ def deploy_seller_to_buyer_transaction(customerAddress, expiry=12, price=20000, 
                         warranty_nft.trackTokenURI(token_id), privateKey)
 
     print(f"Bill number {token_id} confirmed! Warranty has been generated!")
+
     return token_id,link
+
+    return token_id
+
 
 
 def set_tokenURI(token_id, nft_contract, tokenURI, privateKey):#get pvt key of buyer
@@ -158,7 +195,11 @@ def set_tokenURI(token_id, nft_contract, tokenURI, privateKey):#get pvt key of b
     return link
 
 
+
 def buyerToBuyer(_from, _to, _tokenId, price=20000, address="address_1"):#from and address is , of seller
+
+
+
     if WarrantyNFT == []:
         return False
     else:
@@ -168,12 +209,17 @@ def buyerToBuyer(_from, _to, _tokenId, price=20000, address="address_1"):#from a
     tx = warranty_nft.buyerToBuyerSales(
         _from, _to, _tokenId, date_of_purchase, price, {"from": account})
     tx.wait(1)
-    if isOwner(_to, _tokenId, address="address_2"):#_to and address is same, of the owner 
+
+    if isOwner(_to, _tokenId, address="address_2"):#_to and address is same, of t owner 
+
+    if isOwner(_to, _tokenId, address="address_2"):
+
         print("Successfully Transferred!")
         return True
     else:
         print("Could not be transferred!")
         return False
+
 
 
 def isOwner(customer, objectId, address="address_1"):#customer,tokenid,contract deployer address
@@ -186,11 +232,28 @@ def isOwner(customer, objectId, address="address_1"):#customer,tokenid,contract 
     except:
         return False
 
+def isOwner(customer, objectId, address="address_1"):
+    if WarrantyNFT == []:
+        return False
+    else:
+        warranty = WarrantyNFT[-1]
+    return warranty.returnOwner(objectId, customer, {"from": get_account(address=address)})
+
+
 def bill(objectId, address="address_1"):#new owner/BUyer when bought
     if WarrantyNFT == []:
         return False
     else:
         warranty = WarrantyNFT[-1]
+
+
+
+def bill(objectId, address="address_1"):
+    if WarrantyNFT == []:
+        return False
+    else:
+        warranty = WarrantyNFT[-1]
+
 
     objectName, start, end, period, price = warranty.returnBill(
         objectId, {"from": get_account(address=address)})
@@ -204,7 +267,11 @@ def bill(objectId, address="address_1"):#new owner/BUyer when bought
     return (objectName, returnDateFromInt(start), period, returnDateFromInt(end), price)
 
 
+
 def expire(customer=customerAddress, tokenId=None, address="address_1"):#address and customer are same
+
+def expire(customer=customerAddress, tokenId=None, address="address_1"):
+
 
     if WarrantyNFT == []:
         return False
@@ -227,6 +294,7 @@ def expire(customer=customerAddress, tokenId=None, address="address_1"):#address
                              "from": get_account(address=address)})
             print(
                 f"Warranty end date was {returnDateFromInt(warranty_end)}. The warranty has expired. The NFT has been burnt!")
+
             return False,f"Warranty end date was {returnDateFromInt(warranty_end)}. The warranty has expired. The NFT has been burnt!"
         else:
             print(
@@ -237,17 +305,35 @@ def expire(customer=customerAddress, tokenId=None, address="address_1"):#address
 def save_uploaded_ipfs_link(imageFile=None, name=None, description=None, trait: dict = None, address="address_1"):#address is of sellers
     if not imageFile or not name or not description or not trait:
         
+
+            return False
+        else:
+            print(
+                f"Warranty expiry date is {returnDateFromInt(warranty_end)}. You can still claim the warranty!")
+            return True
+
+
+def save_uploaded_ipfs_link(imageFile=None, name=None, description=None, trait: dict = None, address="address_1"):
+    if not imageFile or not name or not description or not trait:
+
         return False
 
     try:
         warranty = WarrantyNFT[-1]
     except:
 
+
         return False
 
     image_uri = upload_to_ipfs(imageFile)
     # print(get_account(address=address),'hahahaha')
     tx = warranty.incrementIPFS({"from": accounts.add(address)})
+
+        return False
+
+    image_uri = upload_to_ipfs(imageFile)
+    tx = warranty.incrementIPFS({"from": get_account(address=address)})
+
     tx.wait(1)
     objectId = warranty.ipfsCounter()
     #json_path = f".\metadata\json\object-{objectId}.json"
@@ -269,6 +355,7 @@ def save_uploaded_ipfs_link(imageFile=None, name=None, description=None, trait: 
     json_uri = f"https://ipfs.io/ipfs/{ipfs_hash}?filename={filename}"
 
     print(ipfs_hash)
+
     # pinata_url = "https://api.pinata.cloud/pinning/pinByHash"
     # payload = json.dumps({
     #     "hashToPin": ipfs_hash,
@@ -289,3 +376,25 @@ def save_uploaded_ipfs_link(imageFile=None, name=None, description=None, trait: 
 
     # #print(response.text)
     return json_uri
+
+    pinata_url = "https://api.pinata.cloud/pinning/pinByHash"
+    payload = json.dumps({
+        "hashToPin": ipfs_hash,
+        "options": {
+            "name": f"Object - {objectId}",
+            "pinataMetadata": jsonObject
+        }
+    })
+    headers = {
+        'Content-Type': 'application/json',
+        'pinata_api_key': config["pinata"]["api_key"],
+        'pinata_secret_api_key': config["pinata"]["secret"]
+    }
+
+    print(payload)
+    response = requests.request(
+        "POST", pinata_url, headers=headers, data=payload)
+
+    print(response.text)
+    return json_uri
+

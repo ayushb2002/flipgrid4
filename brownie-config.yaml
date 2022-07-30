@@ -52,5 +52,8 @@ wallets:
     address_2: ${PRIVATE_KEY_2}
   address_1: ${ADDRESS_1}
   address_2: ${ADDRESS_2}
-  from_mnemonic: ${MNEMONIC}
-  # You'd have to change the accounts.add to accounts.from_mnemonic to use from_mnemonic
+
+pinata:
+  api_key: ${PINATA_API_KEY}
+  secret: ${PINATA_API_SECRET}
+  jwt: ${PINATA_JWT}
